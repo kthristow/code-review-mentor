@@ -1,103 +1,137 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { trpc } from "./_trpc/client";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+
+type Language = "javascript" | "typescript" | "python";
+
+export default function Page() {
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState<Language>("javascript");
+  const [error, setError] = useState("");
+
+  const createSubmission = trpc.submission.create.useMutation();
+  const getSubmissions = trpc.submission.getAll.useQuery();
+
+  const { setInput, handleSubmit, messages, status } = useChat({
+    api: "/api/chat",
+    onFinish: async (message) => {
+      const feedback =
+        message?.parts?.find((p) => p.type === "text")?.text || "";
+      await createSubmission.mutateAsync({ code, language, feedback });
+      getSubmissions.refetch();
+    },
+  });
+
+  const isLoading = status === "streaming";
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.length < 30 || code.length > 500) {
+      setError("Code must be 30-500 characters.");
+      return;
+    }
+    setError("");
+    const prompt = `Act as a senior Security Specialist. Analyze this ${language} code for security issues.
+
+Format response as:
+
+1. Brief summary (1 sentence)
+2. Key findings (bulleted list)
+3. Most critical recommendation
+
+Avoid markdown. Be technical but concise.
+
+\`\`\`${language}
+${code}
+\`\`\``;
+
+    setInput(prompt);
+    handleSubmit(e);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <main className="max-w-4xl mx-auto p-6 space-y-6">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Textarea
+          placeholder="Paste your code..."
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          className="min-h-[200px]"
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+        <Select
+          value={language}
+          onValueChange={(val) => setLanguage(val as Language)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="javascript">JavaScript</SelectItem>
+            <SelectItem value="typescript">TypeScript</SelectItem>
+            <SelectItem value="python">Python</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Analyzing..." : "Submit for Review"}
+        </Button>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+      </form>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <section className="bg-white dark:bg-zinc-900 border rounded-lg p-4 shadow-sm">
+        <h2 className="font-semibold mb-2">AI Feedback</h2>
+        {isLoading && <Skeleton className="h-24 w-full" />}
+        {messages
+          .filter((m) => m.role === "assistant")
+          .map((m) =>
+            m.parts.map((part, i) =>
+              part.type === "text" ? (
+                <p key={`${m.id}-${i}`} className="whitespace-pre-wrap text-sm">
+                  {part.text}
+                </p>
+              ) : null
+            )
+          )}
+      </section>
+
+      <section>
+        <h2 className="font-semibold text-lg mb-2">Submission History</h2>
+        {getSubmissions.isLoading ? (
+          <Skeleton className="h-48 w-full" />
+        ) : (
+          getSubmissions.data?.map((sub) => (
+            <Card key={sub.id}>
+              <CardContent className="p-4 space-y-1">
+                <pre className="text-xs line-clamp-2 whitespace-pre-wrap">
+                  {sub.code}
+                </pre>
+                <p className="text-xs text-muted-foreground">
+                  Feedback: {sub.feedback.slice(0, 50)}...
+                </p>
+                <Link
+                  href={`/submission/${sub.id}`}
+                  className="text-blue-500 text-xs underline"
+                >
+                  View Full
+                </Link>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </section>
+    </main>
   );
 }
