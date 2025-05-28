@@ -4,14 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-type Props = {
-  params: { id: string };
-};
+type Params = Promise<{ slug: string }>;
 
-export default async function SubmissionPage({ params }: Props) {
-  const { id } = await params;
+export default async function SubmissionPage({ params }: { params: Params }) {
+  const { slug } = await params;
+
   const submission = await prisma.submission.findUnique({
-    where: { id: id },
+    where: { id: slug },
   });
 
   if (!submission) return notFound();
