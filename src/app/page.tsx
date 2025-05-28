@@ -3,18 +3,9 @@
 import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { trpc } from "./_trpc/client";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
+import { CodeEditor } from "@/components/CodeEditor";
+import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { SubmissionHistory } from "@/components/SubmissionHistory";
 
 type Language = "javascript" | "typescript" | "python";
 
@@ -23,10 +14,21 @@ export default function Page() {
   const [language, setLanguage] = useState<Language>("javascript");
   const [error, setError] = useState("");
 
-  const createSubmission = trpc.submission.create.useMutation();
+  const createSubmission = trpc.submission.create.useMutation({
+    onError: () => {
+      setError("❌ Failed to save submission to database.");
+    },
+  });
+
   const getSubmissions = trpc.submission.getAll.useQuery();
 
-  const { setInput, handleSubmit, messages, status } = useChat({
+  const {
+    setInput,
+    handleSubmit,
+    messages,
+    status,
+    error: aiError,
+  } = useChat({
     api: "/api/chat",
     onFinish: async (message) => {
       const feedback =
@@ -34,17 +36,23 @@ export default function Page() {
       await createSubmission.mutateAsync({ code, language, feedback });
       getSubmissions.refetch();
     },
+    onError: () => {
+      setError("❌ AI API failed. Try again.");
+    },
   });
 
   const isLoading = status === "streaming";
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (code.length < 30 || code.length > 500) {
-      setError("Code must be 30-500 characters.");
+      setError("Code must be between 30 and 500 characters.");
       return;
     }
+
     setError("");
+
     const prompt = `Act as a senior Security Specialist. Analyze this ${language} code for security issues.
 
 Format response as:
@@ -64,73 +72,28 @@ ${code}
   };
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-6">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <Textarea
-          placeholder="Paste your code..."
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="min-h-[200px]"
+    <main className="max-w-5xl mx-auto p-6 space-y-8 md:space-y-10">
+      <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+        <CodeEditor
+          code={code}
+          setCode={setCode}
+          language={language}
+          setLanguage={setLanguage}
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+          error={error || aiError?.message || ""}
         />
-        <Select
-          value={language}
-          onValueChange={(val) => setLanguage(val as Language)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select language" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="javascript">JavaScript</SelectItem>
-            <SelectItem value="typescript">TypeScript</SelectItem>
-            <SelectItem value="python">Python</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Analyzing..." : "Submit for Review"}
-        </Button>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-      </form>
-
-      <section className="bg-white dark:bg-zinc-900 border rounded-lg p-4 shadow-sm">
-        <h2 className="font-semibold mb-2">AI Feedback</h2>
-        {isLoading && <Skeleton className="h-24 w-full" />}
-        {messages
-          .filter((m) => m.role === "assistant")
-          .map((m) =>
-            m.parts.map((part, i) =>
-              part.type === "text" ? (
-                <p key={`${m.id}-${i}`} className="whitespace-pre-wrap text-sm">
-                  {part.text}
-                </p>
-              ) : null
-            )
-          )}
       </section>
 
-      <section>
-        <h2 className="font-semibold text-lg mb-2">Submission History</h2>
-        {getSubmissions.isLoading ? (
-          <Skeleton className="h-48 w-full" />
-        ) : (
-          getSubmissions.data?.map((sub) => (
-            <Card key={sub.id}>
-              <CardContent className="p-4 space-y-1">
-                <pre className="text-xs line-clamp-2 whitespace-pre-wrap">
-                  {sub.code}
-                </pre>
-                <p className="text-xs text-muted-foreground">
-                  Feedback: {sub.feedback.slice(0, 50)}...
-                </p>
-                <Link
-                  href={`/submission/${sub.id}`}
-                  className="text-blue-500 text-xs underline"
-                >
-                  View Full
-                </Link>
-              </CardContent>
-            </Card>
-          ))
-        )}
+      <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+        <FeedbackPanel messages={messages} isLoading={isLoading} />
+      </section>
+
+      <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+        <SubmissionHistory
+          submissions={getSubmissions.data}
+          isLoading={getSubmissions.isPending}
+        />
       </section>
     </main>
   );
