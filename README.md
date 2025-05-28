@@ -28,12 +28,6 @@ Build a fast, modern web app that offers developers:
 
 ---
 
-## 📸 Demo
-
-Coming soon...
-
----
-
 ## 🧪 Features
 
 ### ✅ 1. Code Submission System
@@ -172,12 +166,6 @@ App is ready to deploy on **Vercel**:
 ```bash
 vercel deploy
 ```
-
----
-
-## 📽️ (Optional) Demo Video
-
-You can add a short [Loom](https://loom.com/) or YouTube link demo here.
 
 ---
 
