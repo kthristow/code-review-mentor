@@ -5,13 +5,21 @@ import React, { useState } from "react";
 import { trpc } from "./client";
 import { httpBatchLink } from "@trpc/client";
 
+// use this instead:
+
 export default function Provider({ children }: { children: React.ReactNode }) {
+  const getBaseUrl = () => {
+    if (typeof window !== "undefined") return ""; // relative URLs in browser
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+    return process.env.NEXT_PUBLIC_APP_URL; // fallback for local dev
+  };
+
   const [queryClient] = useState(() => new QueryClient({}));
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: "http://localhost:3000/api/trpc",
+          url: `${getBaseUrl()}/api/trpc`,
         }),
       ],
     })
