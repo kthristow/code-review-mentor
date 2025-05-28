@@ -35,37 +35,39 @@ export function CodeEditor({
 }: Props) {
   return (
     <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle className="text-xl">Submit Your Code</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          placeholder="Paste your code..."
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="min-h-[200px] font-mono"
-        />
+      <form onSubmit={onSubmit}>
+        <CardHeader>
+          <CardTitle className="text-xl">Submit Your Code</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea
+            placeholder="Paste your code..."
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="min-h-[200px] font-mono"
+          />
 
-        <Select
-          value={language}
-          onValueChange={(val) => setLanguage(val as Language)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select language" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="javascript">JavaScript</SelectItem>
-            <SelectItem value="typescript">TypeScript</SelectItem>
-            <SelectItem value="python">Python</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select
+            value={language}
+            onValueChange={(val) => setLanguage(val as Language)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="javascript">JavaScript</SelectItem>
+              <SelectItem value="typescript">TypeScript</SelectItem>
+              <SelectItem value="python">Python</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? "Analyzing..." : "Submit for Review"}
-        </Button>
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? "Analyzing..." : "Submit for Review"}
+          </Button>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
-      </CardContent>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </CardContent>
+      </form>
     </Card>
   );
 }
