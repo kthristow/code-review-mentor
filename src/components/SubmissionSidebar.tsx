@@ -1,0 +1,63 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+interface Props {
+  submissions: { id: string; code: string; feedback: string }[] | undefined;
+  isLoading: boolean;
+}
+
+export function SubmissionSidebar({ submissions, isLoading }: Props) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <>
+      {/* Toggle Button */}
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "fixed top-4 z-50 bg-zinc-900 text-white p-2 rounded-full shadow-md transition-all hover:bg-zinc-800",
+          open ? "left-64" : "left-4"
+        )}
+        aria-label={open ? "Hide sidebar" : "Show sidebar"}
+      >
+        {open ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+      </button>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed top-0 left-0 h-full w-64 bg-white dark:bg-zinc-950 shadow-md transform transition-transform duration-300 z-40 overflow-y-auto",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="p-4 space-y-3">
+          <h2 className="text-md font-semibold">Submission History</h2>
+          {isLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            submissions?.map((sub) => (
+              <Link key={sub.id} href={`/submission/${sub.id}`}>
+                <Card className="hover:bg-zinc-100 dark:hover:bg-zinc-900 transition cursor-pointer">
+                  <CardContent className="p-3 space-y-1">
+                    <pre className="text-xs font-mono line-clamp-2 text-muted-foreground">
+                      {sub.code}
+                    </pre>
+                    <p className="text-xs text-zinc-500">
+                      Feedback: {sub.feedback.slice(0, 50)}...
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
