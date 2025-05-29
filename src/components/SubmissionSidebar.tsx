@@ -43,7 +43,7 @@ export function SubmissionSidebar({ submissions, isLoading }: Props) {
           ) : (
             submissions?.map((sub) => (
               <Link key={sub.id} href={`/submission/${sub.id}`}>
-                <Card className="hover:bg-zinc-100 dark:hover:bg-zinc-900 transition cursor-pointer">
+                <Card className="hover:bg-zinc-100 dark:hover:bg-zinc-900 transition cursor-pointer mt-[10px] mb-[10px]">
                   <CardContent className="p-3 space-y-1">
                     <pre className="text-xs font-mono line-clamp-2 text-muted-foreground">
                       {sub.code}
