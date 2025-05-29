@@ -72,29 +72,32 @@ ${code}
   };
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-8 md:space-y-10">
-      <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
-        <CodeEditor
-          code={code}
-          setCode={setCode}
-          language={language}
-          setLanguage={setLanguage}
-          onSubmit={onSubmit}
-          isLoading={isLoading}
-          error={error || aiError?.message || ""}
-        />
-      </section>
-
-      <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
-        <FeedbackPanel messages={messages} isLoading={isLoading} />
-      </section>
-
-      <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+    <main className="max-w-6xl mx-auto p-6 flex flex-col md:flex-row gap-6">
+      {/* Sidebar */}
+      <aside className="w-full md:w-[300px] md:sticky md:top-6 h-fit bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
         <SubmissionHistory
           submissions={getSubmissions.data}
           isLoading={getSubmissions.isPending}
         />
-      </section>
+      </aside>
+      {/* Main content (code editor + feedback) */}
+      <div className="flex-1 space-y-6">
+        <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+          <CodeEditor
+            code={code}
+            setCode={setCode}
+            language={language}
+            setLanguage={setLanguage}
+            onSubmit={onSubmit}
+            isLoading={isLoading}
+            error={error || aiError?.message || ""}
+          />
+        </section>
+
+        <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+          <FeedbackPanel messages={messages} isLoading={isLoading} />
+        </section>
+      </div>
     </main>
   );
 }
