@@ -12,24 +12,25 @@ type Language = "javascript" | "typescript" | "python";
 export default function Page() {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState<Language>("javascript");
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
+  const [chatKey, setChatKey] = useState(0); // 👈 key to reset chat hook
 
   const createSubmission = trpc.submission.create.useMutation({
     onError: () => {
-      setError("❌ Failed to save submission to database.");
+      setLocalError("❌ Failed to save submission to database.");
     },
   });
 
   const getSubmissions = trpc.submission.getAll.useQuery();
 
   const {
-    setInput,
-    handleSubmit,
+    append,
     messages,
     status,
     error: aiError,
   } = useChat({
     api: "/api/chat",
+    id: `chat-${chatKey}`, // 👈 gives each chat its own isolated session
     onFinish: async (message) => {
       const feedback =
         message?.parts?.find((p) => p.type === "text")?.text || "";
@@ -37,21 +38,24 @@ export default function Page() {
       getSubmissions.refetch();
     },
     onError: () => {
-      setError("❌ AI API failed. Try again.");
+      setLocalError("❌ AI API failed. Try again.");
     },
   });
 
   const isLoading = status === "streaming";
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (code.length < 30 || code.length > 500) {
-      setError("Code must be between 30 and 500 characters.");
+      setLocalError("Code must be between 30 and 500 characters.");
       return;
     }
 
-    setError("");
+    setLocalError("");
+
+    // 🔄 Reset chat session to prevent message accumulation
+    setChatKey((prev) => prev + 1);
 
     const prompt = `Act as a senior Security Specialist. Analyze this ${language} code for security issues.
 
@@ -67,19 +71,19 @@ Avoid markdown. Be technical but concise.
 ${code}
 \`\`\``;
 
-    setInput(prompt);
-    handleSubmit(e);
+    // Wait for hook reset before sending
+    setTimeout(() => {
+      append({ role: "user", content: prompt });
+    }, 0);
   };
 
   return (
     <div className="flex flex-col md:flex-row relative min-h-screen">
-      {/* Sidebar */}
       <SubmissionSidebar
         submissions={getSubmissions.data}
         isLoading={getSubmissions.isPending}
       />
 
-      {/* Main Content */}
       <main className="flex-1 p-6 md:ml-64 space-y-6">
         <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
           <CodeEditor
@@ -89,12 +93,16 @@ ${code}
             setLanguage={setLanguage}
             onSubmit={onSubmit}
             isLoading={isLoading}
-            error={error || aiError?.message || ""}
+            error={localError || aiError?.message || ""}
           />
         </section>
 
         <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
-          <FeedbackPanel messages={messages} isLoading={isLoading} />
+          <FeedbackPanel
+            key={chatKey}
+            messages={messages}
+            isLoading={isLoading}
+          />
         </section>
       </main>
     </div>
