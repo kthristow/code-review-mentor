@@ -13,9 +13,15 @@ datasource db {
 }
 
 model Submission {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   code      String
   language  String
   feedback  String
-  createdAt DateTime @default(now())
+  reaction  Reaction?
+  createdAt DateTime  @default(now())
+}
+
+enum Reaction {
+  UP
+  DOWN
 }

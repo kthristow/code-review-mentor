@@ -15,6 +15,12 @@ export default function Page() {
   const [localError, setLocalError] = useState("");
   const [chatKey, setChatKey] = useState(0);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  const [latestSubmissionId, setLatestSubmissionId] = useState<string | null>(
+    null
+  );
+  const [latestSubmissionReaction, setLatestSubmissionReaction] = useState<
+    "UP" | "DOWN" | null
+  >(null);
 
   const createSubmission = trpc.submission.create.useMutation({
     onError: () => {
@@ -35,7 +41,17 @@ export default function Page() {
     onFinish: async (message) => {
       const feedback =
         message?.parts?.find((p) => p.type === "text")?.text || "";
-      await createSubmission.mutateAsync({ code, language, feedback });
+
+      const submission = await createSubmission.mutateAsync({
+        code,
+        language,
+        feedback,
+      });
+
+      // ✅ Set latest submission ID and reaction
+      setLatestSubmissionId(submission.id);
+      setLatestSubmissionReaction(submission.reaction ?? null);
+
       getSubmissions.refetch();
     },
     onError: () => {
@@ -45,7 +61,7 @@ export default function Page() {
 
   const isLoading = status === "streaming";
 
-  const isSyntaxValid = (code: string) => {
+  const isSyntaxValid = (code: string): boolean => {
     const stack: string[] = [];
     const map: Record<string, string> = { "(": ")", "{": "}", "[": "]" };
     for (const char of code) {
@@ -54,7 +70,13 @@ export default function Page() {
         if (stack.pop() !== char) return false;
       }
     }
-    return stack.length === 0;
+    if (stack.length !== 0) return false;
+
+    const isLikelyCode =
+      /[=;{}()\[\]]/.test(code) || // Common syntax symbols
+      /function|const|let|var|return|if|else|while|for/.test(code); // Keywords
+
+    return isLikelyCode;
   };
 
   const syntaxError = code.length > 0 && !isSyntaxValid(code);
@@ -63,7 +85,9 @@ export default function Page() {
     e.preventDefault();
 
     if (!isSyntaxValid(code)) {
-      setLocalError("Code contains unmatched brackets or parentheses.");
+      setLocalError(
+        "This does not look like valid code or has unmatched brackets."
+      );
       return;
     }
     if (code.length < 30 || code.length > 500) {
@@ -122,9 +146,10 @@ ${code}
 
         <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
           <FeedbackPanel
-            key={chatKey}
             messages={messages}
             isLoading={isLoading}
+            submissionId={latestSubmissionId}
+            reaction={latestSubmissionReaction}
           />
         </section>
       </main>

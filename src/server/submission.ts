@@ -24,11 +24,16 @@ export const submissionRouter = router({
 
   // Get all recent submissions (limit 10)
   getAll: publicProcedure.query(async () => {
-    return await prisma.submission.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
-  }),
+  return await prisma.submission.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      code: true,
+      feedback: true,
+      reaction: true, // ✅ Must be included
+    },
+  });
+}),
 
   // Get a single submission by ID
   getById: publicProcedure
@@ -38,4 +43,16 @@ export const submissionRouter = router({
         where: { id: input.id },
       });
     }),
+
+  updateReaction: publicProcedure
+    .input(z.object({ id: z.string(), reaction: z.enum(["UP", "DOWN", ""]) }))
+    .mutation(async ({ input }) => {
+      return  prisma.submission.update({
+        where: { id: input.id },
+        data: {
+          reaction: input.reaction || null,
+        },
+      });
+    }),
+
 });
