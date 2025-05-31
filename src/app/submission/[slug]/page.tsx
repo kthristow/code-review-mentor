@@ -3,18 +3,26 @@ import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ShareButton } from "@/components/ShareButton"; // 👈 import this
+import { ShareButton } from "@/components/ShareButton";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
+
+// Simulate getting reaction - in real app, fetch from DB or API
+const getReaction = async (id: string) => {
+  const submission = await prisma.submission.findUnique({ where: { id } });
+  return submission?.reaction || null;
+};
 
 type Params = Promise<{ slug: string }>;
 
 export default async function SubmissionPage({ params }: { params: Params }) {
   const { slug } = await params;
-
   const submission = await prisma.submission.findUnique({
     where: { id: slug },
   });
 
   if (!submission) return notFound();
+
+  const reaction = submission.reaction;
 
   return (
     <main className="max-w-3xl mx-auto p-6 space-y-6">
@@ -45,7 +53,29 @@ export default async function SubmissionPage({ params }: { params: Params }) {
               {submission.feedback}
             </div>
           </div>
-          <ShareButton id={slug} /> {/* 👈 Share button here */}
+          <div className="flex items-center justify-start gap-4">
+            <button
+              className={`p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition ${
+                reaction === "UP"
+                  ? "bg-green-100 text-green-600"
+                  : "bg-muted text-gray-500"
+              }`}
+              aria-label="Thumbs up"
+            >
+              <ThumbsUp size={18} />
+            </button>
+            <button
+              className={`p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition ${
+                reaction === "DOWN"
+                  ? "bg-red-100 text-red-600"
+                  : "bg-muted text-gray-500"
+              }`}
+              aria-label="Thumbs down"
+            >
+              <ThumbsDown size={18} />
+            </button>
+            <ShareButton id={slug} />
+          </div>
         </CardContent>
       </Card>
     </main>

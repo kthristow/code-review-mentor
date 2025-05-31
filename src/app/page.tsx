@@ -117,11 +117,15 @@ ${code}
 
   // 🔁 When chatKey updates and new useChat() is ready, send prompt
   useEffect(() => {
-    if (pendingPrompt) {
-      append({ role: "user", content: pendingPrompt });
-      setPendingPrompt(null); // clear once sent
-    }
-  }, [chatKey]); // only run when chatKey changes
+    const timeout = setTimeout(() => {
+      if (pendingPrompt) {
+        append({ role: "user", content: pendingPrompt });
+        setPendingPrompt(null);
+      }
+    }, 0); // Slight delay to ensure hook is remounted
+
+    return () => clearTimeout(timeout);
+  }, [chatKey]);
 
   return (
     <div className="flex flex-col md:flex-row relative min-h-screen">
