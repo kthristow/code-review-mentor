@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { ShareButton } from "@/components/ShareButton"; // 👈 import this
 
 type Params = Promise<{ slug: string }>;
 
@@ -37,11 +38,14 @@ export default async function SubmissionPage({ params }: { params: Params }) {
       </Card>
 
       <Card>
-        <CardContent className="p-4 space-y-2">
-          <h2 className="font-semibold text-lg">AI Feedback</h2>
-          <div className="bg-muted p-4 rounded text-sm whitespace-pre-wrap">
-            {submission.feedback}
+        <CardContent className="p-4 space-y-4">
+          <div>
+            <h2 className="font-semibold text-lg">AI Feedback</h2>
+            <div className="bg-muted p-4 rounded text-sm whitespace-pre-wrap">
+              {submission.feedback}
+            </div>
           </div>
+          <ShareButton id={slug} /> {/* 👈 Share button here */}
         </CardContent>
       </Card>
     </main>
