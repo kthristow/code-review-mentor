@@ -5,13 +5,11 @@ import React, { useState } from "react";
 import { trpc } from "./client";
 import { httpBatchLink } from "@trpc/client";
 
-// use this instead:
-
 export default function Provider({ children }: { children: React.ReactNode }) {
   const getBaseUrl = () => {
-    if (typeof window !== "undefined") return ""; // relative URLs in browser
+    if (typeof window !== "undefined") return "";
     if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-    return process.env.NEXT_PUBLIC_APP_URL; // fallback for local dev
+    return process.env.NEXT_PUBLIC_APP_URL;
   };
 
   const [queryClient] = useState(() => new QueryClient({}));

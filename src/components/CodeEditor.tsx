@@ -21,7 +21,7 @@ interface Props {
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   error: string;
-  syntaxError?: boolean; // 👈 Optional syntax validation prop
+  syntaxError?: boolean;
 }
 
 export function CodeEditor({

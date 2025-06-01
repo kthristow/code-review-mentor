@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { trpc } from "./_trpc/client";
 import { CodeEditor } from "@/components/CodeEditor";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { SubmissionSidebar } from "@/components/SubmissionSidebar";
+import { Button } from "@/components/ui/button";
 
 type Language = "javascript" | "typescript" | "python";
 
@@ -23,9 +24,7 @@ export default function Page() {
   >(null);
 
   const createSubmission = trpc.submission.create.useMutation({
-    onError: () => {
-      setLocalError("❌ Failed to save submission to database.");
-    },
+    onError: () => setLocalError("❌ Failed to save submission to database."),
   });
 
   const getSubmissions = trpc.submission.getAll.useQuery();
@@ -41,22 +40,16 @@ export default function Page() {
     onFinish: async (message) => {
       const feedback =
         message?.parts?.find((p) => p.type === "text")?.text || "";
-
       const submission = await createSubmission.mutateAsync({
         code,
         language,
         feedback,
       });
-
-      // ✅ Set latest submission ID and reaction
       setLatestSubmissionId(submission.id);
       setLatestSubmissionReaction(submission.reaction ?? null);
-
       getSubmissions.refetch();
     },
-    onError: () => {
-      setLocalError("❌ AI API failed. Try again.");
-    },
+    onError: () => setLocalError("❌ AI API failed. Try again."),
   });
 
   const isLoading = status === "streaming";
@@ -71,11 +64,9 @@ export default function Page() {
       }
     }
     if (stack.length !== 0) return false;
-
     const isLikelyCode =
-      /[=;{}()\[\]]/.test(code) || // Common syntax symbols
-      /function|const|let|var|return|if|else|while|for/.test(code); // Keywords
-
+      /[=;{}()\[\]]/.test(code) ||
+      /function|const|let|var|return|if|else|while|for/.test(code);
     return isLikelyCode;
   };
 
@@ -83,7 +74,6 @@ export default function Page() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!isSyntaxValid(code)) {
       setLocalError(
         "This does not look like valid code or has unmatched brackets."
@@ -94,7 +84,6 @@ export default function Page() {
       setLocalError("Code must be between 30 and 500 characters.");
       return;
     }
-
     setLocalError("");
 
     const prompt = `Act as a senior Security Specialist. Analyze this ${language} code for security issues.
@@ -111,27 +100,31 @@ Avoid markdown. Be technical but concise.
 ${code}
 \`\`\``;
 
-    setPendingPrompt(prompt); // queue prompt
-    setChatKey((prev) => prev + 1); // reset chat instance
+    setPendingPrompt(prompt);
+    setChatKey((prev) => prev + 1); // Reset the chat session
   };
 
-  // 🔁 When chatKey updates and new useChat() is ready, send prompt
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (pendingPrompt) {
-        append({ role: "user", content: pendingPrompt });
-        setPendingPrompt(null);
-      }
-    }, 0); // Slight delay to ensure hook is remounted
-
-    return () => clearTimeout(timeout);
+    if (pendingPrompt) {
+      append({ role: "user", content: pendingPrompt });
+      setPendingPrompt(null);
+    }
   }, [chatKey]);
+
+  const handleNewSubmission = () => {
+    setCode("");
+    setLocalError("");
+    setLatestSubmissionId(null);
+    setLatestSubmissionReaction(null);
+    setChatKey((prev) => prev + 1);
+  };
 
   return (
     <div className="flex flex-col md:flex-row relative min-h-screen">
       <SubmissionSidebar
         submissions={getSubmissions.data}
         isLoading={getSubmissions.isPending}
+        onNewSubmission={handleNewSubmission} // Pass the callback here
       />
 
       <main className="flex-1 p-6 md:ml-64 space-y-6">

@@ -20,7 +20,7 @@ export function ShareButton({ id }: Props) {
 
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Reset after 2s
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (

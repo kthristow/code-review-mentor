@@ -1,8 +1,3 @@
-/**
- * This file is included in `/next.config.ts` which ensures the app isn't built with invalid env vars.
- * It has to be a `.js`-file to be imported there.
- */
-
 import { z } from 'zod';
 
 const envSchema = z.object({

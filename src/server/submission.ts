@@ -3,7 +3,6 @@ import { router, publicProcedure } from "@/server/trpc";
 import { prisma } from "@/server/prisma";
 
 export const submissionRouter = router({
-  // Create a new code submission
   create: publicProcedure
     .input(
       z.object({
@@ -22,7 +21,7 @@ export const submissionRouter = router({
       });
     }),
 
-  // Get all recent submissions (limit 10)
+
   getAll: publicProcedure.query(async () => {
   return await prisma.submission.findMany({
     orderBy: { createdAt: "desc" },
@@ -30,12 +29,11 @@ export const submissionRouter = router({
       id: true,
       code: true,
       feedback: true,
-      reaction: true, // ✅ Must be included
+      reaction: true,
     },
   });
 }),
 
-  // Get a single submission by ID
   getById: publicProcedure
     .input(z.object({ id: z.string().cuid() }))
     .query(async ({ input }) => {

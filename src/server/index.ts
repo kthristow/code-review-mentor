@@ -1,5 +1,5 @@
 import { submissionRouter } from "./submission";
-import { publicProcedure, router } from "./trpc";
+import { router } from "./trpc";
 
 export const appRouter = router({
     submission: submissionRouter

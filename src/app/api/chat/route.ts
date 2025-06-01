@@ -1,4 +1,3 @@
-// app/api/ai/route.ts
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
