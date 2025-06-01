@@ -6,7 +6,6 @@ import { trpc } from "./_trpc/client";
 import { CodeEditor } from "@/components/CodeEditor";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { SubmissionSidebar } from "@/components/SubmissionSidebar";
-import { Button } from "@/components/ui/button";
 
 type Language = "javascript" | "typescript" | "python";
 
@@ -101,7 +100,7 @@ ${code}
 \`\`\``;
 
     setPendingPrompt(prompt);
-    setChatKey((prev) => prev + 1); // Reset the chat session
+    setChatKey((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -124,7 +123,7 @@ ${code}
       <SubmissionSidebar
         submissions={getSubmissions.data}
         isLoading={getSubmissions.isPending}
-        onNewSubmission={handleNewSubmission} // Pass the callback here
+        onNewSubmission={handleNewSubmission}
       />
 
       <main className="flex-1 p-6 md:ml-64 space-y-6">

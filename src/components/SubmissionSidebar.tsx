@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 interface Props {
   submissions: { id: string; code: string; feedback: string }[] | undefined;
   isLoading: boolean;
-  onNewSubmission: () => void; // <-- pass this from Page.tsx
+  onNewSubmission: () => void;
 }
 
 export function SubmissionSidebar({
