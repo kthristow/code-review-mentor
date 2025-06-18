@@ -32,7 +32,6 @@ export function CodeEditor({
   onSubmit,
   isLoading,
   error,
-  syntaxError,
 }: Props) {
   return (
     <Card className="shadow-md">
@@ -45,9 +44,7 @@ export function CodeEditor({
             placeholder="Paste your code..."
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className={`min-h-[200px] font-mono ${
-              syntaxError ? "border-red-500 focus:ring-red-500" : ""
-            }`}
+            className={`min-h-[200px] font-mono`}
           />
 
           <Select
