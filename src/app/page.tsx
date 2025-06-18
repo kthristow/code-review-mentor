@@ -6,6 +6,7 @@ import { trpc } from "./_trpc/client";
 import { CodeEditor } from "@/components/CodeEditor";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { SubmissionSidebar } from "@/components/SubmissionSidebar";
+import * as babelParser from "@babel/parser";
 
 type Language = "javascript" | "typescript" | "python";
 
@@ -48,41 +49,60 @@ export default function Page() {
       setLatestSubmissionReaction(submission.reaction ?? null);
       getSubmissions.refetch();
     },
-    onError: () => setLocalError("❌ AI API failed. Try again."),
+    onError: () => setLocalError("AI API failed. Try again."),
   });
 
   const isLoading = status === "streaming";
 
-  const isSyntaxValid = (code: string): boolean => {
-    const stack: string[] = [];
-    const map: Record<string, string> = { "(": ")", "{": "}", "[": "]" };
-    for (const char of code) {
-      if (map[char]) stack.push(map[char]);
-      else if ([")", "}", "]"].includes(char)) {
-        if (stack.pop() !== char) return false;
-      }
-    }
-    if (stack.length !== 0) return false;
-    const isLikelyCode =
-      /[=;{}()\[\]]/.test(code) ||
-      /function|const|let|var|return|if|else|while|for/.test(code);
-    return isLikelyCode;
-  };
+  async function validatePythonSyntax(
+    code: string
+  ): Promise<{ valid: boolean; error?: string }> {
+    const res = await fetch("/api/python-validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
 
-  const syntaxError = code.length > 0 && !isSyntaxValid(code);
+    const data = await res.json();
+    return { valid: data.valid, error: data.error };
+  }
+
+  const isSyntaxValid = async (
+    code: string,
+    language: Language
+  ): Promise<{ valid: boolean; error?: string }> => {
+    if (language === "python") {
+      return await validatePythonSyntax(code);
+    }
+
+    try {
+      babelParser.parse(code, {
+        sourceType: "module",
+        plugins: language === "typescript" ? ["typescript"] : ["jsx"],
+      });
+      return { valid: true };
+    } catch (error) {
+      return {
+        valid: false,
+        error:
+          (error as Error).message || "Invalid JavaScript/TypeScript syntax",
+      };
+    }
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSyntaxValid(code)) {
-      setLocalError(
-        "This does not look like valid code or has unmatched brackets."
-      );
-      return;
-    }
     if (code.length < 30 || code.length > 500) {
       setLocalError("Code must be between 30 and 500 characters.");
       return;
     }
+
+    const { valid, error } = await isSyntaxValid(code, language);
+    if (!valid) {
+      setLocalError(`❌ ${error || "Invalid syntax"}`);
+      return;
+    }
+
     setLocalError("");
 
     const prompt = `Act as a senior Security Specialist. Analyze this ${language} code for security issues.
@@ -136,7 +156,7 @@ ${code}
             onSubmit={onSubmit}
             isLoading={isLoading}
             error={localError || aiError?.message || ""}
-            syntaxError={syntaxError}
+            syntaxError={false}
           />
         </section>
 
