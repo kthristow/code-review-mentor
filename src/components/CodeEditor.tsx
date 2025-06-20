@@ -1,5 +1,4 @@
 "use client";
-
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,9 +43,8 @@ export function CodeEditor({
             placeholder="Paste your code..."
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className={`min-h-[200px] font-mono`}
+            className="min-h-[200px] font-mono whitespace-pre-wrap break-words"
           />
-
           <Select
             value={language}
             onValueChange={(val) => setLanguage(val as Language)}

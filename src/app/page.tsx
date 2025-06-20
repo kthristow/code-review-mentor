@@ -8,6 +8,7 @@ import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { SubmissionSidebar } from "@/components/SubmissionSidebar";
 import * as babelParser from "@babel/parser";
 import { isLikelyValidPython } from "@/lib/pythonSyntax";
+import { cn } from "@/lib/utils";
 
 type Language = "javascript" | "typescript" | "python";
 
@@ -16,6 +17,7 @@ export default function Page() {
   const [language, setLanguage] = useState<Language>("javascript");
   const [localError, setLocalError] = useState("");
   const [chatKey, setChatKey] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [latestSubmissionId, setLatestSubmissionId] = useState<string | null>(
     null
@@ -59,9 +61,7 @@ export default function Page() {
     code: string,
     language: Language
   ): Promise<{ valid: boolean; error?: string }> => {
-    if (language === "python") {
-      return isLikelyValidPython(code);
-    }
+    if (language === "python") return isLikelyValidPython(code);
 
     try {
       babelParser.parse(code, {
@@ -126,34 +126,43 @@ ${code}
   };
 
   return (
-    <div className="flex flex-col md:flex-row relative min-h-screen">
+    <div className="flex relative min-h-screen">
       <SubmissionSidebar
         submissions={getSubmissions.data}
         isLoading={getSubmissions.isPending}
         onNewSubmission={handleNewSubmission}
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
       />
 
-      <main className="flex-1 p-6 md:ml-64 space-y-6">
-        <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
-          <CodeEditor
-            code={code}
-            setCode={setCode}
-            language={language}
-            setLanguage={setLanguage}
-            onSubmit={onSubmit}
-            isLoading={isLoading}
-            error={localError || aiError?.message || ""}
-          />
-        </section>
+      <main
+        className="flex-1 p-6 md:ml-64 transition-all duration-300 ease-in-out"
+        style={{ marginLeft: sidebarOpen ? "16rem" : "0" }}
+      >
+        <div className="w-full max-w-7xl mx-auto space-y-6 transition-all duration-300 ease-in-out">
+          <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+            <CodeEditor
+              code={code}
+              setCode={setCode}
+              language={language}
+              setLanguage={setLanguage}
+              onSubmit={onSubmit}
+              isLoading={isLoading}
+              error={localError || aiError?.message || ""}
+            />
+          </section>
 
-        <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
-          <FeedbackPanel
-            messages={messages}
-            isLoading={isLoading}
-            submissionId={latestSubmissionId}
-            reaction={latestSubmissionReaction}
-          />
-        </section>
+          {messages.length > 0 && (
+            <section className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-md">
+              <FeedbackPanel
+                messages={messages}
+                isLoading={isLoading}
+                submissionId={latestSubmissionId}
+                reaction={latestSubmissionReaction}
+              />
+            </section>
+          )}
+        </div>
       </main>
     </div>
   );

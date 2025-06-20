@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,15 +11,17 @@ interface Props {
   submissions: { id: string; code: string; feedback: string }[] | undefined;
   isLoading: boolean;
   onNewSubmission: () => void;
+  open: boolean;
+  setOpen: (val: boolean) => void;
 }
 
 export function SubmissionSidebar({
   submissions,
   isLoading,
   onNewSubmission,
+  open,
+  setOpen,
 }: Props) {
-  const [open, setOpen] = useState(true);
-
   return (
     <>
       <button
@@ -36,7 +37,7 @@ export function SubmissionSidebar({
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-white dark:bg-zinc-950 shadow-md transform transition-transform duration-300 z-40 overflow-y-auto",
+          "fixed top-0 left-0 h-full w-64 bg-white dark:bg-zinc-950 shadow-md transition-transform duration-300 z-40 overflow-y-auto",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
